@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>TLO ChatBot</title>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-tomorrow.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+  <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+
+  <style>
+    /* Pastel Yellow/Orange Theme */
+    :root {
+      --primary: #ffc15e; /* Pastel Yellow/Orange for primary actions */
+      --background: #fff; /* White background */
+      --surface: #f7f7f7; /* Light gray surface for containers */
+      --border: #ddd; /* Light gray borders */
+      --text-primary: #222; /* Dark text for readability */
+      --text-secondary: #555; /* Medium gray for less important text */
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+    body {
+      background: var(--background);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+    .agentx-container {
+      width: 100%;
+      max-width: 1200px; /* Reduced max-width */
+      height: 95vh;
+      background: var(--surface);
+      border-radius: 12px; /* Softer corners */
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1); /* Subtle shadow */
+      display: flex;
+      flex-direction: column; /* Stack chat area on top */
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1; /* Allow chat-area to grow and take available space */
+      overflow: hidden; /* Prevent chat-area from overflowing */
+    }
+    .messages-container {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .loading-indicator {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 2em;
+      color: var(--text-primary);
+    }
+    .loading-indicator i {
+      animation: rotate 2s linear infinite;
+    }
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    .message {
+      /* Take up full width with 20px margin on each side */
+      width: calc(100% - 40px);
+      margin: 12px 20px; /* 20px left and right margins */
+      padding: 15px;
+      border-radius: 12px;
+      position: relative;
+      animation: messageAppear 0.3s ease-out;
+      border: 1px solid var(--border);
+      word-wrap: break-word;
+      background-color: #fff; /* White message bubbles */
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05); /* Softer shadow */
+      display: block; /* Ensure it takes up the full width */
+    }
+    .message-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .message-icon {
+      margin-right: 8px;
+      font-size: 1.2em;
+      color: var(--text-secondary); /* Muted icon color */
+    }
+    .assistant-message {
+      /* No background gradient */
+    }
+    .user-message {
+      background-color: #fff7e1; /* Light yellow for user messages */
+    }
+    @keyframes messageAppear {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    /* Code Block Styling */
+    .code-container {
+      position: relative;
+      margin: 15px 0;
+      display: inline-block;
+    }
+    .code-output {
+      padding: 10px;
+      margin-top: 5px;
+      background: #f0f0f0; /* Light gray code background */
+      border-radius: 8px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      border: 1px solid var(--border);
+    }
+    .code-toolbar {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .code-container:hover .code-toolbar {
+      opacity: 1;
+    }
+    .copy-btn,
+    .copy-html-btn {
+      background: rgba(255,193,94,0.1); /* Light yellow/orange button */
+      border: 1px solid var(--primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 12px;
+      display: inline-block;
+    }
+    .copy-btn:hover,
+    .copy-html-btn:hover {
+      background: rgba(255,193,94,0.2);
+    }
+    .html-iframe-wrapper {
+      overflow: auto;
+      position: relative;
+    }
+    /* Input Area */
+    .input-container {
+      padding: 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      position: relative;
+      flex-shrink: 0; /* Prevent input-container from shrinking */
+    }
+    .input-wrapper {
+      position: relative;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .input-field {
+      width: 100%;
+      padding: 12px;
+      background: #fff; /* White input */
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var (--text-primary);
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    .input-field:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(255,193,94,0.2); /* Yellow/orange focus shadow */
+    }
+    .input-controls {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 8px;
+    }
+    .send-btn,
+    .icon-btn {
+      background: rgba(255,193,94,0.1); /* Light yellow/orange button */
+      border: 1px solid var(--primary);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-size: 18px;
+      transition: background 0.3s ease;
+      color: var(--primary);
+    }
+    .send-btn:hover,
+    .icon-btn:hover {
+      background: rgba(255,193,94,0.2);
+    }
+    /* File Upload & Voice Recording */
+    .file-input-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .file-input {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    .attachment-panel {
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: none;
+    }
+    .voice-recording {
+      position: relative;
+    }
+    .recording-indicator {
+      width: 12px;
+      height: 12px;
+      background: #ff0000;
+      border-radius: 50%;
+      animation: pulse 1s infinite;
+      display: none;
+    }
+    @keyframes pulse {
+      0%   { opacity: 1; }
+      50%  { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    /* Typing Indicator */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      margin-top: 10px;
+      margin-left: 15px;
+    }
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-secondary);
+      margin: 0 2px;
+      animation: blink 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.4s;
+    }
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.8s;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 0.3; }
+      100%    { opacity: 1; }
+    }
+    /* Styles for the welcome screen */
+    #welcome-screen {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30%;
+      height: 30%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      z-index: 1000;
+    }
+
+    #welcome-image {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div class="agentx-container">
+    <div id="welcome-screen">
+      <img id="welcome-image" src="TLO_welcome.png" alt="Welcome">
+    </div>
+    <!-- Chat Area -->
+    <div class="chat-area">
+      <!-- Messages -->
+      <div class="messages-container" id="messages">
+        <div class="loading-indicator" id="loadingIndicator">
+          <i class="fas fa-spinner"></i>
+        </div>
+      </div>
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+      <!-- Input Box -->
+      <div class="input-container">
+        <div class="input-wrapper">
+          <div class="attachment-panel" id="attachmentPanel">
+            <button class="icon-btn" onclick="document.getElementById('fileInput').click()">
+              <i class="fas fa-file-upload"></i>
+            </button>
+            <div class="voice-recording">
+              <button class="icon-btn" id="voiceButton">
+                <i class="fas fa-microphone"></i>
+                <div class="recording-indicator"></div>
+              </button>
+            </div>
+          </div>
+          <input type="text" class="input-field" id="userInput" placeholder="Ask me anything...">
+          <input type="file" id="fileInput" hidden>
+          <div class="input-controls">
+            <button class="icon-btn" id="attachmentButton">
+              <i class="fas fa-paperclip"></i>
+            </button>
+            <button class="send-btn" onclick="sendMessage()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+  <script>
+    const messagesContainer = document.getElementById('messages');
+    const userInput         = document.getElementById('userInput');
+    const fileInput         = document.getElementById('fileInput');
+    const voiceButton       = document.getElementById('voiceButton');
+    const recordingIndicator= document.querySelector('.recording-indicator');
+    const attachmentButton  = document.getElementById('attachmentButton');
+    const attachmentPanel   = document.getElementById('attachmentPanel');
+    const typingIndicator   = document.getElementById('typingIndicator');
+    const loadingIndicator  = document.getElementById('loadingIndicator');
+    let recognition;
+    let conversationHistory = [];
+    let currentConversation = { id: null, messages: [] };
+    // Toggle the attachment panel
+    attachmentButton.addEventListener('click', () => {
+      attachmentPanel.style.display = attachmentPanel.style.display === 'none' ? 'block' : 'none';
+    });
+    // Voice Recognition
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value   = transcript;
+        console.log('speech:', transcript);
+      };
+      recognition.onstart = () => { recordingIndicator.style.display = 'block'; };
+      recognition.onend   = () => { recordingIndicator.style.display   = 'none'; };
+    }
+    // Helper: Extract <html> block
+    function extractHTML(text) {
+      const regex = /<html[\s\S]*<\/html>/i;
+      const match = text.match(regex);
+      return match ? match[0] : null;
+    }
+    function createMessageElement(text, isUser) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', isUser ? 'user-message' : 'assistant-message');
+      let processedText = text;
+      // Transform triple-backtick code blocks
+      processedText = processedText.replace(/```(\w+)\n([\s\S]*?)```/g, (match, language, code) => {
+        const codeTrimmed = code.trim();
+        if (language === 'html') {
+          const htmlContent = extractHTML(codeTrimmed);
+          return `
+            <div class="code-container">
+              <div class="html-render-container">
+                <button class="copy-html-btn" onclick="copyHtmlCode(this, '${encodeURIComponent(htmlContent)}')">
+                  Copy HTML
+                </button>
+                <div class="html-iframe-wrapper">
+                  <iframe
+                    sandbox="allow-scripts"
+                    srcdoc="${encodeURIComponent(htmlContent)}"
+                    style="width:100%;height:300px;border:none;"
+                  ></iframe>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (language === 'pyscript') {
+          return `
+            <div class="code-container">
+              <div class="html-render-container">
+                <div class="html-iframe-wrapper">
+                  <py-script>
+                    ${codeTrimmed}
+                  </py-script>
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="code-container">
+              <pre><code class="language-${language}">${codeTrimmed}</code></pre>
+              <div class="code-toolbar">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+      messageDiv.innerHTML = `
+        <div class="message-header">
+          <div class="message-icon">
+            ${isUser ? '<i class="fas fa-user"></i>' : '<img src="TLO.png" alt="TLO ChatBot" style="width: 24px; height: 24px; vertical-align: middle; margin-right: 8px;">'}
+          </div>
+          <div>${isUser ? 'You' : 'TLO ChatBot'}</div>
+        </div>
+        ${processedText}
+      `;
+      // Re-run Prism highlight
+      setTimeout(() => Prism.highlightAllUnder(messageDiv), 10);
+      return messageDiv;
+    }
+    // Add message to UI
+    function addMessage(text, isUser) {
+      const msgElement = createMessageElement(formatLLMResponse(text), isUser);
+      messagesContainer.appendChild(msgElement);
+      // Scroll to the bottom of the messages container
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      const timestamp = new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      currentConversation.messages.push({ text, isUser, timestamp });
+    }
+    async function getGeminiResponse(prompt, conversationId) {
+      try {
+        const file = fileInput.files[0];
+        let fileData = '';
+        if (file) {
+          fileData = await readFileAsBase64(file);
+          fileInput.value = '';
+          console.log('fileData', fileData);
+        }
+        // Adjust to your local server or deployment
+        const response = await fetch('http://127.0.0.1:5000/run', {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify({
+            task              : prompt,
+            add_infos         : "",
+            agent_type        : "custom",
+            llm_provider      : "gemini",
+            llm_model_name    : "gemini-1.5-flash",
+            llm_temperature   : 1,
+            llm_base_url      : null,
+            llm_api_key       : "AIzaSyAn4pR_NsfKdxi4q7cGBH2tJAwDopsY_Wk",
+            use_own_browser   : true,
+            headless          : false,
+            disable_security  : true,
+            window_w          : 1200,
+            window_h          : 800,
+            save_recording_path : "./tmp/record_videos",
+            save_trace_path     : "./tmp/traces",
+            enable_recording    : true,
+            max_steps           : 100,
+            use_vision          : true,
+            max_actions_per_step: 10,
+            tool_call_in_content: true,
+            conversationId      : conversationId,
+          })
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;
+      }
+      catch (error) {
+        console.error('API Error:', error);
+        return { final_result: "Sorry, I encountered an error. Please try again." };
+      }
+    }
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload  = () => { resolve(reader.result); };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+    function copyCode(button) {
+      const code = button.closest('.code-container').querySelector('code').innerText;
+      navigator.clipboard.writeText(code);
+      button.textContent = 'Copied!';
+      setTimeout(() => (button.textContent = 'Copy'), 2000);
+    }
+    function copyHtmlCode(button, htmlCode) {
+      const decodedHtml = decodeURIComponent(htmlCode);
+      navigator.clipboard.writeText(decodedHtml);
+      button.textContent = 'Copied!';
+      setTimeout(() => (button.textContent = 'Copy HTML'), 2000);
+    }
+    // Handle file selection
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        addMessage(`File attached: ${file.name}`, true);
+      }
+    });
+    // Voice Recording
+    voiceButton.addEventListener('click', () => {
+      if (recognition) {
+        recognition.start();
+      }
+    });
+    // The actual "Send" function
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+      addMessage(message, true);
+      userInput.value = '';
+      loadingIndicator.style.display = 'flex';
+      try {
+        const data = await getGeminiResponse(message, currentConversation.id);
+        if (data.need_more_info) {
+          addMessage("I need more information.", false);
+        } else {
+          addMessage(data.final_result || "", false);
+        }
+        // OPTIONAL: If you want to see the model actions/thoughts in chat:
+        if (data.model_actions && data.model_actions.length > 0) {
+          const actionsStr = data.model_actions.join('\n');
+          addMessage(`**Model Actions**:\n\`\`\`\n${actionsStr}\n\`\`\``, false);
+        }
+        if (data.model_thoughts && data.model_thoughts.length > 0) {
+          const thoughtsStr = data.model_thoughts.join('\n');
+          addMessage(`**Model Thoughts**:\n\`\`\`\n${thoughtsStr}\n\`\`\``, false);
+        }
+      }
+      catch (error) {
+        addMessage("Error processing your request", false);
+      }
+      loadingIndicator.style.display = 'none';
+    }
+    function formatLLMResponse(text) {
+      let formatted = text.replace(/\n/g, '<br>');
+      formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      formatted = formatted.replace(/^# (.*)$/gm, '<h1>$1</h1>');
+      formatted = formatted.replace(/^## (.*)$/gm, '<h2>$2</h2>');
+      formatted = formatted.replace(/^### (.*)$/gm, '<h3>$3</h3>');
+      formatted = formatted.replace(/^\*\s+(.*)$/gm, '<li>$1</li>').replace(/(<li>.*?<\/li>(<br>)?)+/g, '<ul>$&</ul>');
+      formatted = formatted.replace(/^(\d+)\.\s+(.*)$/gm, '<li>$2</li>').replace(/(<li>.*?<\/li>(<br>)?)+/g, '<ol>$&</ol>');
+      return formatted;
+    }
+    // Function to hide the welcome screen
+    function hideWelcomeScreen() {
+      const welcomeScreen = document.getElementById('welcome-screen');
+      welcomeScreen.style.display = 'none';
+    }
+
+    // Hide welcome screen when the user sends a message
+    const originalSendMessage = sendMessage; // Store the original sendMessage function
+
+    sendMessage = async function() {
+      hideWelcomeScreen(); // Hide the welcome screen
+      await originalSendMessage.apply(this, arguments); // Call the original sendMessage
+    }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
