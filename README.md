@@ -2,22 +2,22 @@
 
 ## Overview
 
-The TLO Chatbot is an interactive web application developed for TLO, designed to provide users with detailed, fact-based responses in a conversational format. It seamlessly integrates front-end technologies—HTML, CSS, and JavaScript—with a Python backend that leverages the Google Gemini API. A distinctive feature of the chatbot is its welcome screen, which displays an image that gracefully disappears upon the user's first interaction.
+The TLO Chatbot is an interactive web application developed for TLO, designed to provide users with detailed, fact-based responses in a conversational format. It seamlessly integrates front-end technologies—HTML, CSS, and JavaScript—with a Python backend that leverages the Google Gemini API.
 
 ## Features
 
-- **Interactive Chat Interface:** Offers a clean and user-friendly design that facilitates seamless conversations.
-- **Dynamic Welcome Screen:** Displays a centered welcome image (`TLO_welcome.png`) upon initial page load, which automatically disappears after the user sends their first message.
-- **Responsive Communication:** Provides detailed, fact-based responses to user inquiries.
-- **Loading Indicator:** Utilizes a visual cue to inform users when the chatbot is processing a response from the Gemini API.
-- **Extended Functionality:** Supports file uploads and voice recording, with ongoing enhancements to fully implement these features.
-- **Enhanced Code Display:** Features code block styling accompanied by a copy-to-clipboard functionality for user convenience.
+- **Interactive Chat Interface:** Offers a clean and user-friendly design that facilitates seamless conversations.
+- **Responsive Communication:** Provides detailed, fact-based responses to user inquiries.
+- **Loading Indicator:** Utilizes a visual cue to inform users when the chatbot is processing a response from the Gemini API.
+- **Extended Functionality:** Supports file uploads and voice recording, with ongoing enhancements to fully implement these features.
+- **Enhanced Code Display:** Features code block styling accompanied by a copy-to-clipboard functionality for user convenience.
 
 ## Technologies Used
 
-- **Front-End:** HTML, CSS, JavaScript
-- **Back-End:** Python
-- **API Integration:** Google Gemini API
+- **Front-End:** HTML, CSS, JavaScript
+- **Back-End:** Python
+- **API Integration:** Google Gemini API (make sure to rename .env.example to .env and set it with you google api)
+  
 
 ## Installation Guide
 
@@ -26,8 +26,11 @@ The TLO Chatbot is an interactive web application developed for TLO, designed to
    git clone https://github.com/88448844/TLO_CHATBOT.git
    ```
 
-
+
 2. **Set Up Python Environment:**
+
+   - (make sure to rename .env.example to .env and set it with you google api)
+   - create a folder named knowledge_base and upload docx files in order to create a custom defualt knowledge base
    - Navigate to the repository directory:
      ```bash
      cd TLO_CHATBOT
@@ -50,7 +53,7 @@ The TLO Chatbot is an interactive web application developed for TLO, designed to
      pip install -r requirements.txt
      ```
      *Ensure that the `requirements.txt` file includes all necessary dependencies, such as `google-generativeai`.*
-3. **Prepare Front-End Assets:**
+4. **Prepare Front-End Assets:**
    - Ensure that the `TLO_welcome.png` image file is located in the same directory as `index.html`.
 
 ## Usage
